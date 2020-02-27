@@ -21,7 +21,7 @@ ggplot(d_mt, aes(x = distance, y = accuracy) ) +
   geom_smooth(method = 'glm', method.args = list(family = 'binomial'), se = FALSE) + 
   facet_wrap(~ ps_code) +
   theme_bw()
-ggsave("nur_mt.png", width = 8, height = 8)
+ggsave("nur_roda_mt.png", width = 8, height = 8)
 
 #####################################
 # One Target Task Data
@@ -50,13 +50,13 @@ left_join(d_1t_s, d_1t_a) %>%
 rm(d_1t_a, d_1t_s)
 
 ggplot(d_1t, aes(x = mean_standing_position, fill = gender)) + 
-geom_histogram(alpha = 0.5, binwidth= 5, position="dodge", colour = "black") +
-scale_fill_viridis_d()
-ggsave("nur_1t1.png", width = 8, height = 8)
+geom_histogram(alpha = 0.5, binwidth= 2, position="dodge", colour = "black") +
+scale_fill_viridis_d() + facet_wrap(~ gender)
+ggsave("nur_roda_1t1.png", width = 8, height = 8)
 
 ggplot(d_1t, aes(x = mean_standing_position, y = mean_acc, colour = gender)) + geom_jitter(size = 3, height = 0.02) +
 	scale_y_continuous(breaks = c(0, 1/3, 2/3, 1),labels = c("0/3", "1/3", "2/3", "3/3"))
-ggsave("nur_1t2.png", width = 8, height = 8)
+ggsave("nur_roda_1t2.png", width = 8, height = 8)
 
 ggplot(d_1t, aes(x = first_standing_position, y = mean_standing_position)) + geom_point()
 #####################################
@@ -98,7 +98,7 @@ ggplot(dc, aes(x = mean_standing_position, y = mean_n_postition)) +
 ggplot(dc, aes(x = hoop_delta, y = mean_n_postition)) + 
 	geom_point() + geom_path() + 
 	facet_wrap(~ paste(mean_standing_position, sep = "-"))
-ggsave("nur_2t.png")
+ggsave("nur_roda_2t.png")
 dc 	%>%
 	spread(hoop_delta, mean_n_postition) %>%
 	mutate(pos_change = `7.04` - `1.9`) %>%
@@ -107,7 +107,7 @@ dc 	%>%
 ggplot(dc2, 
 	aes(x = mean_standing_position, y = pos_change)) + 
 geom_jitter(size = 3) + geom_smooth(method = "lm") + theme_bw()
-ggsave("nur_2t_change.png")
+ggsave("nur_roda_2t_change.png")
 
 m <- aov(data = dc, mean_n_postition ~ hoop_delta * mean_standing_position)
 summary(m)
