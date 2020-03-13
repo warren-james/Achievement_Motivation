@@ -18,8 +18,10 @@ df_part2 <- df_part2 %>%
          Distance = Position,
          Distance = 20 - Distance,
          # Hit = ifelse(Accuracy == "Yes", 1, 0),
-         Hit = as.factor(ifelse(Accuracy == "Yes", 1, 0))) %>% 
-  select(Participant, Trial, Distance, Hit)
+         Hit = as.factor(ifelse(Accuracy == "Yes", 1, 0)),
+         remove = as.numeric(Participant),
+         cond = ifelse(remove %% 2 == 0, "goal", "performance")) %>% 
+  select(Participant, cond, Trial, Distance, Hit, - remove)
 
 # merge these 
 df_decisions <- merge(df_part2, df_exp_acc)
@@ -37,7 +39,8 @@ df_sp <- df_exp_acc %>%
 # or just do distance and add a line for the 50% distance
 df_decisions %>% 
   ggplot(aes(Trial, Distance)) + 
-  geom_point(aes(colour = Hit)) +
+  geom_point(aes(colour = Hit, 
+                 shape = cond)) +
   geom_line() + 
   geom_hline(data = df_sp, 
              aes(yintercept =  Distance),
@@ -45,3 +48,22 @@ df_decisions %>%
   facet_wrap(~Participant) + 
   theme_bw() + 
   see::scale_color_flat() 
+
+
+df_decisions %>%
+  # group_by(Participant) %>% 
+  # mutate(p = mean(p)) %>%
+  # filter(Trial == 20) %>%
+  ggplot(aes(p, 
+             colour = cond, 
+             fill = cond)) + 
+  geom_histogram(position = "dodge")
+  # geom_density(alpha = .3) #+ 
+  #geom_histogram(position = "dodge") +#, aes(y = ..density..)) +
+  # facet_wrap(~Trial)
+
+
+df_decisions %>% 
+  ggplot(aes(cond, Distance)) + 
+  geom_boxplot() # + 
+  # geom_point(position = jitter)
