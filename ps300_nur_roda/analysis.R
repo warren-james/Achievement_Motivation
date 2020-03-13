@@ -54,6 +54,11 @@ geom_histogram(alpha = 0.5, binwidth= 2, position="dodge", colour = "black") +
 scale_fill_viridis_d() + facet_wrap(~ gender)
 ggsave("nur_roda_1t1.png", width = 8, height = 8)
 
+ggplot(d_1t, aes(x = mean_standing_position)) + 
+geom_histogram(bins = 10, alpha = 0.5, binwidth= 2, position="dodge", colour = "black") +
+scale_fill_viridis_d() 
+ggsave("nur_roda_1t1_2.png", width = 8, height = 8)
+
 ggplot(d_1t, aes(x = mean_standing_position, y = mean_acc, colour = gender)) + geom_jitter(size = 3, height = 0.02) +
 	scale_y_continuous(breaks = c(0, 1/3, 2/3, 1),labels = c("0/3", "1/3", "2/3", "3/3"))
 ggsave("nur_roda_1t2.png", width = 8, height = 8)
@@ -94,11 +99,11 @@ d_2t %>% group_by(ps_code, group, gender, hoop_delta) %>%
 ggplot(dc, aes(x = mean_standing_position, y = mean_n_postition)) +
 	geom_jitter() + facet_wrap(~ hoop_delta) + geom_smooth(method = lm)
 
-
 ggplot(dc, aes(x = hoop_delta, y = mean_n_postition)) + 
 	geom_point() + geom_path() + 
 	facet_wrap(~ paste(mean_standing_position, sep = "-"))
 ggsave("nur_roda_2t.png")
+
 dc 	%>%
 	spread(hoop_delta, mean_n_postition) %>%
 	mutate(pos_change = `7.04` - `1.9`) %>%
