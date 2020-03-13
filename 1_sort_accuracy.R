@@ -1,7 +1,5 @@
 #### Sorting accuracy ####
 # Sort out the accuracy data for Connor 
-# I think he's done how many people missed out of 12? 
-# but we can check if this gives sensible predictions or not.... 
 
 #### Library ####
 library(tidyverse)
@@ -10,7 +8,6 @@ library(tidyverse)
 df_part1 <- read.csv("data/Accuracy/Session 2- Ability.csv")
 
 #### pre process ####
-# Connor recorded no. misses... which is weird... but ok
 df_part1 <- df_part1 %>% 
   mutate(inhoop = 12 - Total,
          Acc = inhoop/12,
@@ -26,29 +23,57 @@ df_part1 %>%
   geom_smooth(method = glm,
               method.args = list(family = binomial),
               se = F) + 
+  scale_x_continuous(limits = c(0,20)) +
   facet_wrap(~Participant)
 # looks ok
 
 #### Sort out Curves for each participant ####
-m <- glm(Acc ~ Distance:Participant,
-         data = df_part1,
-         family = binomial) 
+# this version doesn't work so well...
+# so maybe we should just do it by participant
+# so we need a loop...
+# m <- glm(Acc ~ Distance:Participant,
+#          data = df_part1,
+#          family = binomial) 
+# 
+# # now make a dataframe for predictions
+# slabs <- seq(0,30,1)
+# df_exp_acc <- tibble(Participant = rep(unique(df_part1$Participant), each = length(slabs)),
+#                      Distance = rep(slabs, length(unique(df_part1$Participant)))) %>% 
+#   mutate(p = predict(m, data.frame(Distance = Distance, Participant = Participant), type = "response"))
+# 
+# # looks good now so we can save this 
+# save(df_exp_acc, file = "scratch/df_exp_acc")
 
-# now make a dataframe for predictions
+# setup df
+df_exp_acc <- tibble(Participant = character(),
+                     Distance = numeric(),
+                     p = numeric())
+
+# setup slabes to test
 slabs <- seq(0,30,1)
-df_exp_acc <- tibble(Participant = rep(unique(df_part1$Participant), each = length(slabs)),
-                     Distance = rep(slabs, length(unique(df_part1$Participant)))) %>% 
-  mutate(p = predict(m, data.frame(Distance = Distance, Participant = Participant), type = "response"))
 
-# looks good now so we can save this 
-save(df_exp_acc, file = "scratch/df_exp_acc")
+# loop to add in data
+for(subj in unique(df_part1$Participant)){
+  ss <- df_part1 %>% filter(Participant == subj)
+  m <- glm(Acc ~ Distance, 
+           data = ss, 
+           family = binomial)
+  df_exp_acc <- rbind(df_exp_acc, tibble(Participant = as.factor(rep(subj, length(slabs))),
+                                         Distance = slabs,
+                                         p = predict(m, data.frame(Distance = Distance), type = "response")))
+}
+
+# save 
+save(df_exp_acc, file = "scratch/df_exp_acc2")
 
 # plot this 
 df_part1 %>% 
-  mutate(p = predict(m, type = "response")) %>%
-  ggplot(aes(Distance, p)) + 
+  ggplot(aes(Distance, Acc)) + 
   geom_point() + 
-  geom_smooth(method = glm,
+  geom_smooth(data = df_exp_acc,
+              aes(y = p), 
+              method = glm,
               method.args = list(family = binomial),
               se = F) + 
+  scale_x_continuous(limits = c(0,20)) +
   facet_wrap(~Participant)
