@@ -64,7 +64,7 @@ for(subj in unique(df_part1$Participant)){
 }
 
 # save 
-save(df_exp_acc, file = "scratch/df_exp_acc2")
+save(df_exp_acc, file = "scratch/df_exp_acc")
 
 # plot this 
 df_part1 %>% 

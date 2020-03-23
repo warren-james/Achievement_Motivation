@@ -14,7 +14,7 @@ load("scratch/df_part1")
 # read in a csv file
 df_part2 <- read.csv("data/Decisions/Session 1 - Decisions.csv")
 # load an R file
-load("scratch/df_exp_acc2")
+load("scratch/df_exp_acc")
 
 df_exp_acc <- df_exp_acc %>% 
   mutate(Distance_m = Distance * 0.46,
@@ -145,6 +145,32 @@ ggsave(file = "scratch/plots/plt_hist.png",
        width = 8, 
        height = 6)
 
+# recreate the atkinson plot 
+# basically just a line version of the histogram plot above 
+plt_line <- df_part2 %>% 
+  group_by(Group, Distance) %>%
+  summarise(count = n()) %>% 
+  ggplot(aes(Distance, count, colour = Group)) + 
+  geom_line() + 
+  see::scale_color_flat() + 
+  # scale_x_continuous("Expected Accuracy", labels = scales::percent_format(accuracy = 1)) +
+  theme_bw()
+plt_line
+
+# save this 
+ggsave(file = "scratch/plots/Atkinson_version_plot.png",
+       width = 8,
+       height = 6)
+
+# a version that was averaged for each participant 
+# but this probably won't work the way we want it to... 
+# plt_line_avg <- df_part2 %>% 
+#   group_by(Participant, Group) %>% 
+#   summarise(Exp_acc = mean(Expected_Acc)) %>% 
+#   ungroup() %>% 
+#   group_by(Group, Exp_acc) %>% 
+#   summarise(count = n())
+
 #### Basic t tests ####
 # first, we need to get some summary data
 df_ttest <- df_part2 %>% 
@@ -156,6 +182,7 @@ df_ttest <- df_part2 %>%
 
 # save this for SPSS 
 write.table(df_ttest, file = "scratch/df_ttest.txt", row.names = F)
+
 # show the data
 df_ttest
 
