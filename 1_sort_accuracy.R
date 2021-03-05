@@ -1,79 +1,72 @@
-#### Sorting accuracy ####
-# Sort out the accuracy data for Connor 
+#### Script to look at the Accuracy data ####
+# This script will pull in all the acc data and fit some curves to see how people 
+# in this experiment did 
 
-#### Library ####
+#### library ####
 library(tidyverse)
 
-#### load in data #### 
-df_part1 <- read.csv("data/Accuracy/Session 2- Ability.csv")
+#### read in data ####
+df_acc_Con <- read_csv("OldVersion/data/Accuracy/Session 2- Ability.csv")
+# remove weird columns
+df_acc_Con <- df_acc_Con %>%
+  # not sure where these columns are coming from... 
+  select(-c(X4, X5)) 
 
-#### pre process ####
-df_part1 <- df_part1 %>% 
+
+df_acc_Xia <- read_csv("data/current/Session 2- Ability.csv")
+# remove Connor participants for now 
+df_acc_Xia <- df_acc_Xia %>% 
+  filter(Participant > 11) %>% 
+  # remove participants with missing data 
+  drop_na()
+
+df_acc <- rbind(df_acc_Con, df_acc_Xia) %>%
   mutate(inhoop = 12 - Total,
          Acc = inhoop/12,
-         Participant = as.factor(Participant))
+         Participant = as.factor(Participant)) %>% 
+  select(-Total)
 
-# save 
-save(df_part1, file = "scratch/df_part1")
+# save this for later 
+save(df_acc, file = "scratch/newData/df_acc")
 
-# quick plot 
-df_part1 %>%
+#### plots ####
+# Looking good for now... this is just the "average" participant for now
+df_acc %>% 
   ggplot(aes(Distance, Acc)) + 
-  geom_point() + 
   geom_smooth(method = glm,
-              method.args = list(family = binomial),
-              se = F) + 
-  scale_x_continuous(limits = c(0,20)) +
-  facet_wrap(~Participant)
-# looks ok
+              method.args = list(family = "binomial"))
 
-#### Sort out Curves for each participant ####
-# this version doesn't work so well...
-# so maybe we should just do it by participant
-# so we need a loop...
-# m <- glm(Acc ~ Distance:Participant,
-#          data = df_part1,
-#          family = binomial) 
-# 
-# # now make a dataframe for predictions
-# slabs <- seq(0,30,1)
-# df_exp_acc <- tibble(Participant = rep(unique(df_part1$Participant), each = length(slabs)),
-#                      Distance = rep(slabs, length(unique(df_part1$Participant)))) %>% 
-#   mutate(p = predict(m, data.frame(Distance = Distance, Participant = Participant), type = "response"))
-# 
-# # looks good now so we can save this 
-# save(df_exp_acc, file = "scratch/df_exp_acc")
+#### setup models ####
+# This way is using our normal approach... 
+# but we can do something a bit better later at some other point if we really want to... 
+#### > Standard ####
+# make the model
+m <- glm(Acc ~ Distance:Participant, 
+         family = "binomial", 
+         data = df_acc)
 
-# setup df
-df_exp_acc <- tibble(Participant = character(),
-                     Distance = numeric(),
-                     p = numeric())
+# get some predictions 
+slabs <- seq(0, 25, 1)
 
-# setup slabes to test
-slabs <- seq(0,30,1)
+df_expacc <- tibble(Participant = rep(unique(df_acc$Participant), each = length(slabs)),
+                    Distance = rep(slabs, length(unique(df_acc$Participant))),
+                    ExpAcc = predict(m, data.frame(Distance = Distance, Participant = Participant), type = "response"))
 
-# loop to add in data
-for(subj in unique(df_part1$Participant)){
-  ss <- df_part1 %>% filter(Participant == subj)
-  m <- glm(Acc ~ Distance, 
-           data = ss, 
-           family = binomial)
-  df_exp_acc <- rbind(df_exp_acc, tibble(Participant = as.factor(rep(subj, length(slabs))),
-                                         Distance = slabs,
-                                         p = predict(m, data.frame(Distance = Distance), type = "response")))
-}
+# make a nice plot of this 
+df_expacc %>% 
+  ggplot(aes(Distance, ExpAcc)) + 
+  geom_path(aes(group = Participant),
+            alpha = .3)
 
-# save 
-save(df_exp_acc, file = "scratch/df_exp_acc")
+# save this 
+save(df_expacc, file = "scratch/newData/df_expacc")
 
-# plot this 
-df_part1 %>% 
-  ggplot(aes(Distance, Acc)) + 
-  geom_point() + 
-  geom_smooth(data = df_exp_acc,
-              aes(y = p), 
-              method = glm,
-              method.args = list(family = binomial),
-              se = F) + 
-  scale_x_continuous(limits = c(0,20)) +
-  facet_wrap(~Participant)
+#### get switch points ####
+df_SP <- df_expacc %>% 
+  group_by(Participant) %>% 
+  filter(abs(ExpAcc - .5) == min(abs(ExpAcc - .5))) %>% 
+  mutate(p_sp = ExpAcc) %>% 
+  select(-ExpAcc)
+
+# save this 
+save(df_SP, file = "scratch/newData/df_SP")
